@@ -1,3 +1,4 @@
+// Play Rock, Paper, and Scissors.
 "use strict";
 
 const CHOICES = ["Rock", "Paper", "Scissors"];
