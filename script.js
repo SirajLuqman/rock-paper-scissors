@@ -1,12 +1,27 @@
-// Play Rock, Paper, and Scissors.
 "use strict";
 
+// Play Rock, Paper, and Scissors.
+
 const CHOICES = ["Rock", "Paper", "Scissors"];
-const WINNING_SCORE = 3;
+const WINNING_SCORE = 5;
+
+const rockButton = document.querySelector("#rock");
+const paperButton = document.querySelector("#paper");
+const scissorsButton = document.querySelector("#scissors");
+
+const scoreDisplay = document.querySelector("#score");
+const resultsDisplay = document.querySelector("#results");
+
+let playerScore = 0;
+let computerScore = 0;
+let roundNumber = 0;
+let gameOver = false;
 
 function normalizeChoice(value) {
   if (typeof value !== "string") return null;
+
   const normalized = value.trim().toLowerCase();
+
   return CHOICES.find((choice) => choice.toLowerCase() === normalized) ?? null;
 }
 
@@ -22,12 +37,15 @@ function playRound(playerSelection, computerSelection) {
   if (!player || !computer) {
     return {
       outcome: "invalid",
-      message: "A round needs a valid Rock, Paper, or Scissors choice from both sides."
+      message: "Please choose Rock, Paper, or Scissors.",
     };
   }
 
   if (player === computer) {
-    return { outcome: "draw", message: `It's a draw! Both chose ${player}.` };
+    return {
+      outcome: "draw",
+      message: `It's a draw! Both chose ${player}.`,
+    };
   }
 
   const playerWins =
@@ -38,96 +56,87 @@ function playRound(playerSelection, computerSelection) {
   if (playerWins) {
     return {
       outcome: "player",
-      message: `${player} beats ${computer}. You win this round!`
+      message: `${player} beats ${computer}. You win this round!`,
     };
   }
 
   return {
     outcome: "computer",
-    message: `${computer} beats ${player}. The AI wins this round.`
+    message: `${computer} beats ${player}. The Evil AI wins this round.`,
   };
 }
 
-function getPlayerSelection() {
-  while (true) {
-    let answer;
-    try {
-      answer = prompt(
-        "Choose Rock, Paper, or Scissors.\n" +
-        "Your choice is not case-sensitive. You can type extra spaces.\n" +
-        "Invalid entries do not count as rounds. Press Cancel to quit."
-      );
-    } catch (error) {
-      console.error("The input dialog could not be opened. The game will end safely.", error);
-      return null;
-    }
+function updateScore() {
+  scoreDisplay.textContent = `You: ${playerScore} | Evil AI: ${computerScore}`;
+}
 
-    if (answer === null) return null;
+function displayResult(message) {
+  const paragraph = document.createElement("p");
+  paragraph.textContent = message;
 
-    const choice = normalizeChoice(answer);
-    if (choice) return choice;
+  resultsDisplay.appendChild(paragraph);
+}
 
-    alert("That choice is not valid. Please enter Rock, Paper, or Scissors. Your score has not changed.");
+function checkWinner() {
+  if (playerScore === WINNING_SCORE) {
+    displayResult("YOU WIN! The Evil AI has been defeated!");
+
+    gameOver = true;
+  } else if (computerScore === WINNING_SCORE) {
+    displayResult("THE EVIL AI WINS! Better luck next time!");
+
+    gameOver = true;
+  }
+
+  if (gameOver) {
+    rockButton.disabled = true;
+    paperButton.disabled = true;
+    scissorsButton.disabled = true;
   }
 }
 
-function game() {
-  alert(
-    "ROCK, PAPER, SCISSORS: STOP THE EVIL AI!\n\n" +
-    "First to win 3 rounds saves the world. Draws score no points, and invalid entries do not count.\n\n" +
-    "You play using the prompts. Round results, scores, and the final result appear in the browser console.\n\n" +
-    "To open the console in Chrome on Windows/Linux, press Ctrl+Shift+J (or F12 and choose Console). " +
-    "On Mac, press Cmd+Option+J. Keep the Console tab open while playing.\n\n" +
-    "Press OK when you are ready. Press Cancel in a choice prompt to quit safely."
+function handlePlayerChoice(playerSelection) {
+  if (gameOver) return;
+
+  const computerSelection = computerPlay();
+
+  const result = playRound(playerSelection, computerSelection);
+
+  if (result.outcome === "invalid") {
+    displayResult(result.message);
+    return;
+  }
+
+  roundNumber++;
+
+  if (result.outcome === "player") {
+    playerScore++;
+  } else if (result.outcome === "computer") {
+    computerScore++;
+  }
+
+  displayResult(
+    `Round ${roundNumber}: You chose ${playerSelection}; ` +
+      `the Evil AI chose ${computerSelection}.`,
   );
 
-  let playerScore = 0;
-  let computerScore = 0;
-  let roundNumber = 0;
+  displayResult(result.message);
 
-  console.clear();
-  console.log("=== ROCK, PAPER, SCISSORS: STOP THE EVIL AI ===");
-  console.log("First to 3 points wins. Draws award no points.");
-  console.log("Open/keep the Console tab open to follow the game.");
+  updateScore();
 
-  while (playerScore < WINNING_SCORE && computerScore < WINNING_SCORE) {
-    const playerSelection = getPlayerSelection();
-    if (playerSelection === null) {
-      console.log("Game cancelled. No additional round was played.");
-      alert("Game cancelled safely. Check the browser console for the rounds played so far.");
-      return;
-    }
-
-    const computerSelection = computerPlay();
-    const result = playRound(playerSelection, computerSelection);
-    if (result.outcome === "invalid") {
-      // Defensive guard: invalid selections must never affect the score.
-      alert(result.message);
-      continue;
-    }
-
-    roundNumber += 1;
-    if (result.outcome === "player") playerScore += 1;
-    if (result.outcome === "computer") computerScore += 1;
-
-    console.log(`Round ${roundNumber}: You chose ${playerSelection}; the AI chose ${computerSelection}.`);
-    console.log(result.message);
-    console.log(`Score — You: ${playerScore} | Evil AI: ${computerScore}`);
-    console.log("----------------------------------------");
-
-    if (playerScore < WINNING_SCORE && computerScore < WINNING_SCORE) {
-      alert(`${result.message}\n\nScore — You: ${playerScore} | Evil AI: ${computerScore}\n\nChoose again. First to ${WINNING_SCORE} points wins.`);
-    }
-  }
-
-  const finalMessage = playerScore === WINNING_SCORE
-    ? "YOU WIN! The evil AI has been defeated and humanity is safe."
-    : "THE EVIL AI WINS! The world will have to try again.";
-
-  console.log("=== FINAL RESULT ===");
-  console.log(finalMessage);
-  console.log(`Final score — You: ${playerScore} | Evil AI: ${computerScore}`);
-  alert(`${finalMessage}\n\nFinal score — You: ${playerScore} | Evil AI: ${computerScore}\n\nSee the browser console for the full game record.`);
+  checkWinner();
 }
 
-game();
+// Add event listeners to the three buttons.
+
+rockButton.addEventListener("click", () => {
+  handlePlayerChoice("Rock");
+});
+
+paperButton.addEventListener("click", () => {
+  handlePlayerChoice("Paper");
+});
+
+scissorsButton.addEventListener("click", () => {
+  handlePlayerChoice("Scissors");
+});
