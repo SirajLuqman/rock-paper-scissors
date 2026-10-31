@@ -127,8 +127,6 @@ function handlePlayerChoice(playerSelection) {
   checkWinner();
 }
 
-// Add event listeners to the three buttons.
-
 rockButton.addEventListener("click", () => {
   handlePlayerChoice("Rock");
 });
